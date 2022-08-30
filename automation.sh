@@ -38,3 +38,37 @@ aws s3 ls
 aws s3 \
 cp /tmp/${myname}-httpd-logs-${timestamp}.tar \
 s3://${s3_bucket}/${myname}-httpd-logs-${timestamp}.tar
+
+echo "checking the presence of inventory file"
+
+
+inventoryfile=/var/www/html/inventory.html
+if [ -f "$inventoryfile" ]; then
+    echo "inventory.html file exists."
+    #If the inventory file already exists,it will create new entry with the latest record in the metadata inventory file
+    #As for each day/each run there will be 1 log tar file only
+    ls -lhrt /tmp/*.tar | awk '{print $5"-" $9}' | awk -F  "-"  '{print $3"-"$4"\t"$5"-"$6"\t"$1}' | awk -F "." '{print $1"\t\t"$2"."$3}' | tail -1 >> /var/www/html/inventory.html
+    echo "New record have been added"
+else
+    echo "inventory.html file does not exist."
+    echo "Creating inventory file"
+    touch $inventoryfile
+    echo "Log Type"$'\t'"Date Created"$'\t'$'\t'"Type"$'\t'"Size". >> /var/www/html/inventory.html
+    ls -lhrt /tmp/*.tar | awk '{print $5"-" $9}' | awk -F  "-"  '{print $3"-"$4"\t"$5"-"$6"\t"$1}' | awk -F "." '{print $1"\t\t"$2"."$3}' >> /var/www/html/inventory.html
+    echo "New file created"
+fi
+cat /var/www/html/inventory.html
+
+echo "Checking / Scheduling cron Job"
+cronfile="/root/Automation_Project/automation.sh"
+if grep -q $cronfile  /etc/cron.d/*; then
+   echo "cron job is alreay scheduled"
+else
+   echo "cron Job is not scheduled"
+   echo " Scheduling the cronjob for automation.sh"
+   echo "05 00 * * * root /root/Automation_Project/automation.sh" >> /etc/cron.d/automation
+   echo "cron Job has been scheduled"
+fi
+
+cat /etc/cron.d/automation
+
