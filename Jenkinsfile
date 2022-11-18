@@ -14,11 +14,10 @@ echo docker push'''
       }
     }
 
-    stage('Linux Testing') {
+    stage('Testing') {
       parallel {
         stage('Linux Testing') {
           steps {
-            sh 'Linux Testing'
             sh 'echo Linux Testing'
           }
         }
